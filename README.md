@@ -459,9 +459,53 @@ CacheProvider.setCache(new Cache() {
     }
 });
 ```
+### Generating JSON from JsonPath
 
+JsonPath set/put API can be used to update the value in a document at a given Path. But what if the Path to be updated does not exist.
 
+```java
+    String inputObject =  "{ }";
+    String path = "$.a.b.c";
+    JsonPath compiledPath = JsonPath.compile(path);
+    Object output = compiledPath.set(pathConfiguration.jsonProvider().parse(inputObject),
+                12345,pathConfiguration);
+    Integer result = parse(output).read(path);
+    DocumentContext jsonContext = JsonPath.parse(output);
+    System.out.println("Document Created by JsonPaths:" + jsonContext.jsonString());
+    assertThat(result).isEqualTo(12345);
+```
+Here path '$.a.b.c' does not exist in the input Object so we would get a PathNotFoundException
 
+```java
+com.jayway.jsonpath.PathNotFoundException: Missing property in path $['a']
+        at com.jayway.jsonpath.internal.path.EvaluationContextImpl.getValue(EvaluationContextImpl.java:133)
+        at com.jayway.jsonpath.JsonPath.read(JsonPath.java:199)
+        at com.jayway.jsonpath.internal.JsonContext.read(JsonContext.java:89)
+        at com.jayway.jsonpath.internal.JsonContext.read(JsonContext.java:78)
+```
+
+There are usecases where one would like the above set API to create a JSON of the form below:
+
+```javascript
+{"a":{"b":{"c":12345}}}
+```
+This is now possible by enabling a new Configuration Option named `CREATE_MISSING_PROPERTIES_ON_DEFINITE_PATH`. The feature will only work if the 'path' argument represents a Definite Path as per JsonPath definitions.
+
+```java
+    Configuration pathConfiguration = Configuration.builder()
+                .options(Option.CREATE_MISSING_PROPERTIES_ON_DEFINITE_PATH).build();
+    String inputObject =  "{ }";
+    String path = "$.a.b.c";
+    JsonPath compiledPath = JsonPath.compile(path);
+    Object output = compiledPath.set(pathConfiguration.jsonProvider().parse(inputObject),
+            12345,pathConfiguration);
+    Integer result = parse(output).read(path);
+    DocumentContext jsonContext = JsonPath.parse(output);
+    System.out.println("Document Created by JsonPaths:" + jsonContext.jsonString());
+    assertThat(result).isEqualTo(12345);
+```
+
+* `NOTE: when the path argument supplied is not definite, one would see things such as classcast exception`
 
 
 

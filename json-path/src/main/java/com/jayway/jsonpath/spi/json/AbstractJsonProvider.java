@@ -48,6 +48,20 @@ public abstract class AbstractJsonProvider implements JsonProvider {
         return getArrayIndex(obj, idx);
     }
 
+    /**
+     * method to add a new Value to the array.
+     * @param array
+     * @param newValue
+     */
+    public void addArrayIndex(Object array,  Object newValue) {
+        if (!isArray(array)) {
+            throw new UnsupportedOperationException();
+        } else {
+            List l = (List) array;
+            l.add(newValue);
+        }
+    }
+
     public void setArrayIndex(Object array, int index, Object newValue) {
         if (!isArray(array)) {
             throw new UnsupportedOperationException();
