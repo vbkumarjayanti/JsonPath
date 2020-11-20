@@ -77,13 +77,14 @@ Functions
 Functions can be invoked at the tail end of a path - the input to a function is the output of the path expression.
 The function output is dictated by the function itself.
 
-| Function                  | Description                                                        | Output    |
-| :------------------------ | :----------------------------------------------------------------- |-----------|
-| min()                    | Provides the min value of an array of numbers                       | Double    |
-| max()                    | Provides the max value of an array of numbers                       | Double    |
-| avg()                    | Provides the average value of an array of numbers                   | Double    |
-| stddev()                 | Provides the standard deviation value of an array of numbers        | Double    |
-| length()                 | Provides the length of an array                                     | Integer   |
+| Function                  | Description                                                         | Output    |
+| :------------------------ | :------------------------------------------------------------------ |-----------|
+| min()                     | Provides the min value of an array of numbers                       | Double    |
+| max()                     | Provides the max value of an array of numbers                       | Double    |
+| avg()                     | Provides the average value of an array of numbers                   | Double    |
+| stddev()                  | Provides the standard deviation value of an array of numbers        | Double    |
+| length()                  | Provides the length of an array                                     | Integer   |
+| sum()                     | Provides the sum value of an array of numbers                       | Double    |
 
 
 Filter Operators
@@ -91,20 +92,22 @@ Filter Operators
 
 Filters are logical expressions used to filter arrays. A typical filter would be `[?(@.age > 18)]` where `@` represents the current item being processed. More complex filters can be created with logical operators `&&` and `||`. String literals must be enclosed by single or double quotes (`[?(@.color == 'blue')]` or `[?(@.color == "blue")]`).   
 
-| Operator                 | Description                                                       |
-| :----------------------- | :---------------------------------------------------------------- |
-| ==                       | left is equal to right (note that 1 is not equal to '1')          |
-| !=                       | left is not equal to right                                        |
-| <                        | left is less than right                                           |
-| <=                       | left is less or equal to right                                    |
-| >                        | left is greater than right                                        |
-| >=                       | left is greater than or equal to right                            |
-| =~                       | left matches regular expression  [?(@.name =~ /foo.*?/i)]         |
-| in                       | left exists in right [?(@.size in ['S', 'M'])]                    |
-| nin                      | left does not exists in right                                     |
-| subsetof                 | left is a subset of right [?(@.sizes subsetof ['S', 'M', 'L'])]     |
-| size                     | size of left (array or string) should match right                 |
-| empty                    | left (array or string) should be empty                            |
+| Operator                 | Description                                                           |
+| :----------------------- | :-------------------------------------------------------------------- |
+| ==                       | left is equal to right (note that 1 is not equal to '1')              |
+| !=                       | left is not equal to right                                            |
+| <                        | left is less than right                                               |
+| <=                       | left is less or equal to right                                        |
+| >                        | left is greater than right                                            |
+| >=                       | left is greater than or equal to right                                |
+| =~                       | left matches regular expression  [?(@.name =~ /foo.*?/i)]             |
+| in                       | left exists in right [?(@.size in ['S', 'M'])]                        |
+| nin                      | left does not exists in right                                         |
+| subsetof                 | left is a subset of right [?(@.sizes subsetof ['S', 'M', 'L'])]       |
+| anyof                    | left has an intersection with right [?(@.sizes anyof ['M', 'L'])]     |
+| noneof                   | left has no intersection with right [?(@.sizes noneof ['M', 'L'])]    |
+| size                     | size of left (array or string) should match right                     |
+| empty                    | left (array or string) should be empty                                |
 
 
 Path Examples
@@ -245,7 +248,7 @@ If you configure JsonPath to use `JacksonMappingProvider` or `GsonMappingProvide
 Book book = JsonPath.parse(json).read("$.store.book[0]", Book.class);
 ```
 
-To obtainin full generics type information, use TypeRef.
+To obtain full generics type information, use TypeRef.
 
 ```java
 TypeRef<List<String>> typeRef = new TypeRef<List<String>>() {};
@@ -337,6 +340,15 @@ assertThat(pathList).containsExactly(
     "$['store']['book'][3]['author']");
 ```
 
+Set a value 
+-----------
+The library offers the possibility to set a value.
+
+```java
+String newJson = JsonPath.parse(json).set("$['store']['book'][0]['author']", "Paul").jsonString();
+```
+
+
 
 Tweaking Configuration
 ----------------------
@@ -383,10 +395,13 @@ This option configures JsonPath to return a list even when the path is `definite
 ```java
 Configuration conf = Configuration.defaultConfiguration();
 
-//Works fine
+//ClassCastException thrown
 List<String> genders0 = JsonPath.using(conf).parse(json).read("$[0]['gender']");
-//PathNotFoundException thrown
-List<String> genders1 = JsonPath.using(conf).parse(json).read("$[1]['gender']");
+
+Configuration conf2 = conf.addOptions(Option.ALWAYS_RETURN_LIST);
+
+//Works fine
+List<String> genders0 = JsonPath.using(conf2).parse(json).read("$[0]['gender']");
 ``` 
 **SUPPRESS_EXCEPTIONS**
 <br/>
@@ -395,6 +410,21 @@ This option makes sure no exceptions are propagated from path evaluation. It fol
 * If option `ALWAYS_RETURN_LIST` is present an empty list will be returned
 * If option `ALWAYS_RETURN_LIST` is **NOT** present null returned 
 
+**REQUIRE_PROPERTIES**
+</br>
+This option configures JsonPath to require properties defined in path when an `indefinite` path is evaluated.
+
+```java
+Configuration conf = Configuration.defaultConfiguration();
+
+//Works fine
+List<String> genders = JsonPath.using(conf).parse(json).read("$[*]['gender']");
+
+Configuration conf2 = conf.addOptions(Option.REQUIRE_PROPERTIES);
+
+//PathNotFoundException thrown
+List<String> genders = JsonPath.using(conf2).parse(json).read("$[*]['gender']");
+```
 
 ### JsonProvider SPI
 
@@ -466,4 +496,3 @@ CacheProvider.setCache(new Cache() {
 
 
 [![Analytics](https://ga-beacon.appspot.com/UA-54945131-1/jsonpath/index)](https://github.com/igrigorik/ga-beacon)
-
