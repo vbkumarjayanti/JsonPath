@@ -33,7 +33,7 @@ News
 Getting Started
 ---------------
 
-JsonPath is available at the Central Maven Repository. Maven users add this to your POM.
+JsonPath is now available at the Central Maven Repository. Maven users add this to your POM.
 
 ```xml
 <dependency>
